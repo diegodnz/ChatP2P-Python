@@ -24,10 +24,15 @@ def startPeer():
                 server = Server(nick, host, port, room, client, lock)  # Server é uma thread
                 server.start()
                 firstEntry = False
-            else:  # Se existia um server para este peer, ele é finalizado e um novo é aberto                 
-                server.running = False
-                server = Server(nick, host, port, room, client, lock)
-                server.start()
+            else:              
+                if server.port != port:  # Se existia um server com porta diferente para este peer, ele é finalizado e um novo é aberto.
+                    server.running = False
+                    server = Server(nick, host, port, room, client, lock)
+                    server.start()
+                else:  # Se a porta for a mesma, o server á apenas atualizado com as novas informações
+                    server.port = port
+                    server.room = room
+                    server.myClient = client
              
 
             print(f'Sua sala foi criada no endereço {host} e porta {port}!!')
@@ -96,11 +101,16 @@ def startPeer():
                         server = Server(nick, host, port, room, client, lock)  # Inicializa a thread server
                         server.start()
                         firstEntry = False
-                    else:  # Se existia um server para este peer, ele é finalizado e um novo é aberto         
-                        server.running = False
-                        server = Server(nick, host, port, room, client, lock)
-                        server.start()
-                        
+                    else:     
+                        if server.port != port:  # Se existia um server com porta diferente para este peer, ele é finalizado e um novo é aberto.
+                            server.running = False
+                            server = Server(nick, host, port, room, client, lock)
+                            server.start()
+                        else:  # Se a porta for a mesma, o server á apenas atualizado com as novas informações
+                            server.port = port
+                            server.room = room
+                            server.myClient = client
+
 
                     chekingADM = CheckADM(room, nick, client)  # Todos os usuários da sala checam continuamente se o adm não se desconectou de forma inesperada
                     chekingADM.start()
