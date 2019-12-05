@@ -89,8 +89,10 @@ class Client():
                         print('O usuário não está presente nesta sala')
                 elif entry[0:9] == '/members':
                     print('\nMembros da sala:')
+                    print(f'{self.room.nickADM} (ADM)')
                     for member in self.room.members:
-                        print(member)
+                        if member != self.room.nickADM:
+                            print(member)
                     print('\n')
                 elif entry == '/sair':
                     self.room.members.pop(self.nick)
