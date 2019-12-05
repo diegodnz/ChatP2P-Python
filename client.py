@@ -1,8 +1,20 @@
 from socket import *
 import time
 
+def splitMessage(message):
+    """Recebe uma string com informações separadas por \n e devolve uma lista, separando as informações"""
+    listInformations = []
+    string = ''
+    for chr in message:
+        if chr != '\n':
+            string += chr
+        else:
+            listInformations.append(string)
+            string = ''
+    return listInformations
+
 class Client():
-    def __init__(self, nick, ip, port, adm, room):
+    def __init__(self, nick, ip, port, adm, room, roomIP, roomPort):
         self.nick = nick
         self.ip = ip
         self.port = port
@@ -13,20 +25,29 @@ class Client():
         self.adm = adm  # Indica se é adm da sala (bool)
         self.running = True  # Indica se o peer está na sala, ou seja, não foi removido ou saiu
         self.banned = False  # Indica se o peer foi banido
+        self.roomIP = roomIP
+        self.roomPort = roomPort
 
 
     def sendText(self, text, dic, blackList=[]):
         """Recebe um texto e um dicionário contendo pessoas. Envia o texto para cada pessoa do dicionário"""
         for person in dic:
             if person not in blackList:  # blackList indica as pessoas na qual não se deve mandar a mensagem
-                host, port = dic[person][0], dic[person][1]
+                host, port = dic[person]
                 socket_ = socket(AF_INET, SOCK_STREAM)
                 socket_.connect((host, port))
-                socket_.sendall(str(self.port).encode())
-                time.sleep(0.1)
-                socket_.sendall('text'.encode())  # Indica que vai mandar uma mensagem
-                time.sleep(0.1)
-                socket_.sendall(text.encode())  # Manda a mensagem
+                socket_.sendall(f'{self.nick}\ntext\n{text}\n'.encode())
+
+
+    def updateRoom(self, type, nick, ip, port):
+        """Manda atualizações da sala para todos os membros"""
+        for person in self.room.members:
+            if person != self.nick and not (type == 'add' and nick == person):
+                ipMember, portMember = self.room.members[person]
+                socket_ = socket(AF_INET, SOCK_STREAM)
+                socket_.connect((ipMember, portMember))
+                socket_.sendall(f'{self.nick}\nupdate\n{type}\n{nick}\n{ip}\n{str(port)}\n'.encode())
+
 
     def chatPeer(self):
         """Chat dentro de uma sala. Funciona tanto para um membro, quanto para um adm"""
@@ -85,7 +106,7 @@ class Client():
                         self.updateRoom('ban', nick, ip, port)
                         self.room.members.pop(nick)
                         self.room.ips.pop((ip, port))
-                        self.room.ban.append((ip, port))
+                        self.room.ban.append((nick, ip))
                         self.room.queueADM.remove(nick)
                         print(f'Você baniu {nick}!!')
                     elif nick == self.nick:
@@ -117,22 +138,3 @@ class Client():
             print('Você foi banido desta sala!!')
 
 
-    def updateRoom(self, type, nick, ip, port):
-        """Manda atualizações da sala para todos os membros"""
-        for person in self.room.members:
-            if person != self.nick and not (type=='add' and nick == person):
-                ipMember, portMember = self.room.members[person][0], self.room.members[person][1]
-                socket_ = socket(AF_INET, SOCK_STREAM)
-                socket_.connect((ipMember, portMember))
-                socket_.sendall(str(self.port).encode())
-                time.sleep(0.01)
-                socket_.sendall('update'.encode())
-                time.sleep(0.01)
-                socket_.sendall(type.encode())  # Este envio indica o tipo de alteração na sala
-                time.sleep(0.01)
-                socket_.sendall(nick.encode())
-                time.sleep(0.01)
-                socket_.sendall(ip.encode())
-                time.sleep(0.01)
-                socket_.sendall(str(port).encode())
-                time.sleep(0.01)
