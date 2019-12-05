@@ -1,6 +1,7 @@
 import threading
 import time
-import socket
+from socket import *
+
 
 class CheckADM(threading.Thread):  # Esta thread é executada por todos os membros da sala, menos o adm. Ela checa se o adm se desconectou
     def __init__(self, room, myNick, client):
@@ -21,7 +22,7 @@ class CheckADM(threading.Thread):  # Esta thread é executada por todos os membr
                 socket_ = socket(AF_INET, SOCK_STREAM)
                 hostADM, portADM = self.members[self.room.nickADM]
                 socket_.connect((hostADM, int(portADM)))
-                socket_.sendall(str(int(60284)).encode())
+                socket_.sendall(''.encode())
                 socket_.close()
             except:
                 check = False
@@ -41,6 +42,7 @@ class CheckADM(threading.Thread):  # Esta thread é executada por todos os membr
         self.room.nickADM = newADM
         self.room.ipADM = self.members[newADM][0]
         self.room.portADM = self.members[newADM][1]
+        self.client.roomIP, self.client.roomPort = self.room.members[newADM]
         print('O dono da sala se desconectou!!!')
         if not self.myNick == newADM:  # Se o novo adm não for este próprio cliente, então ele voltará a rodar a thread de checagem de adm
             print(f'{newADM} é o novo dono da sala!!')
@@ -64,25 +66,27 @@ class CheckMembers(threading.Thread):  # Esta thread é executada somente pelo a
     def run(self):
         """Checa continuamente se algum membro foi desconectado da sala. Caso encontre, envia esta informação para toda a sala"""
         while True:
-            time.sleep(0.1)
             if not self.client.running or self.client.banned:
                 break
             for member in self.room.queueADM:
+                time.sleep(0.3/int(len(self.room.queueADM)))  # O tempo de espera para realizar a checagem é inversamente proporcional ao número de membros
                 if not self.client.running or self.client.banned:
                     break
-                time.sleep(0.1)
                 try:
                     hostMember, portMember = self.room.members[member]
                     socket_ = socket(AF_INET, SOCK_STREAM)
-                    socket_.connect((hostMember, portMember))
-                    socket_.sendall(str(int(60456)).encode())
+                    socket_.connect((hostMember, int(portMember)))
+                    socket_.sendall(''.encode())
+                    socket_.close()
                 except:
                     self.memberDisconnect(member)
-                    time.sleep(1)
+                    time.sleep(0.1)
 
     def memberDisconnect(self, member):
         """Remove o membro desconectado da sala e envia um update de sala para todos os membros"""
         try:
+            # Try utilizado pois caso o membro tenha saído normalmente pelo menu, avisando a todos, ele já foi removido.
+            # Porém se ele saiu porque fechou o programa ou caiu, precisa ser removido.
             ipMember, portMember = self.room.members[member]
             self.room.members.pop(member)
             self.room.ips.pop((ipMember, portMember))
