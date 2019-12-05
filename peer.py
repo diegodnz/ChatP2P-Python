@@ -24,10 +24,11 @@ def startPeer():
                 server = Server(nick, host, port, room, client, lock)  # Server é uma thread
                 server.start()
                 firstEntry = False
-            else:
-                server.port = port
-                server.myClient = client  # A partir da segunda iteração no menu, somente o objeto client e a room são atualizados, já que o server foi inicializado anteriormente
-                server.room = room
+            else:  # Se existia um server para este peer, ele é finalizado e um novo é aberto                 
+                server.running = False
+                server = Server(nick, host, port, room, client, lock)
+                server.start()
+             
 
             print(f'Sua sala foi criada no endereço {host} e porta {port}!!')
             time.sleep(0.03)
@@ -95,13 +96,11 @@ def startPeer():
                         server = Server(nick, host, port, room, client, lock)  # Inicializa a thread server
                         server.start()
                         firstEntry = False
-                    else:
-                        if server.port != port:
-                            server.running = False
-                            server = Server(nick, host, port, room, client, lock)
-                            server.start()
-                        server.room = room
-                        server.myClient = client
+                    else:  # Se existia um server para este peer, ele é finalizado e um novo é aberto         
+                        server.running = False
+                        server = Server(nick, host, port, room, client, lock)
+                        server.start()
+                        
 
                     chekingADM = CheckADM(room, nick, client)  # Todos os usuários da sala checam continuamente se o adm não se desconectou de forma inesperada
                     chekingADM.start()
