@@ -1,17 +1,3 @@
-'''
-Universidade Federal de Pernambuco (UFPE) (http://www.ufpe.br)
-Centro de Informática (CIn) (http://www.cin.ufpe.br)
-Disciplina: IF975 - Redes de Computadores
-Curso: Sistemas de Informação
-Data: 06/12/2019
-Autores: Alisson Diego Diniz D. da Fonseca (adddf)
-         Lucas do Carmo Barbosa (lcb3)
-         Luiz Henrique Pedrozo Vieira (lhpv)
-         Pedro Manoel Farias Sena de Lima (pmfsl)
-         José Rudá Alves do Nascimento (jran)
-'''
-
-
 from server import *
 from room import *
 from client import *
