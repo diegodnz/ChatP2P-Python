@@ -1,7 +1,20 @@
+'''
+Universidade Federal de Pernambuco (UFPE) (http://www.ufpe.br)
+Centro de Informática (CIn) (http://www.cin.ufpe.br)
+Disciplina: IF975 - Redes de Computadores
+Curso: Sistemas de Informação
+Data: 06/12/2019
+Autores: Alisson Diego Diniz D. da Fonseca (adddf)
+         Lucas do Carmo Barbosa (lcb3)
+         Luiz Henrique Pedrozo Vieira (lhpv)
+         Pedro Manoel Farias Sena de Lima (pmfsl)
+         José Rudá Alves do Nascimento (jran)
+'''
+
+
 import threading
 import time
 from socket import *
-
 
 class CheckADM(threading.Thread):  # Esta thread é executada por todos os membros da sala, menos o adm. Ela checa se o adm se desconectou
     def __init__(self, room, myNick, client):

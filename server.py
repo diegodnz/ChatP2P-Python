@@ -1,3 +1,17 @@
+'''
+Universidade Federal de Pernambuco (UFPE) (http://www.ufpe.br)
+Centro de Informática (CIn) (http://www.cin.ufpe.br)
+Disciplina: IF975 - Redes de Computadores
+Curso: Sistemas de Informação
+Data: 06/12/2019
+Autores: Alisson Diego Diniz D. da Fonseca (adddf)
+         Lucas do Carmo Barbosa (lcb3)
+         Luiz Henrique Pedrozo Vieira (lhpv)
+         Pedro Manoel Farias Sena de Lima (pmfsl)
+         José Rudá Alves do Nascimento (jran)
+'''
+
+
 from socket import *
 from client import *
 import threading
@@ -12,7 +26,7 @@ class Connection(threading.Thread):  # Esta thread representa uma conexão do se
         self.lock = lock  # Utilizado para rodar a thread de forma separada das demais, evitando conflito com outras conexões
 
         self.senderIP = senderIP  # Ip do cliente que abriu a conexão
-        self.senderNick = senderNick  # Porta do cliente
+        self.senderNick = senderNick  # Nick do cliente
         self.dataReceived = dataReceived
 
         self.myNick = myself[0]  # Nick do peer servidor
@@ -26,7 +40,13 @@ class Connection(threading.Thread):  # Esta thread representa uma conexão do se
         data = self.dataReceived[1:]  # O primeiro elemento da mensagem recebida (nick do sender) já foi utilizado
         if data[0] == 'request':  # Se for um request, ele está querendo entrar na sala
             adm = (self.room.nickADM == self.myNick and self.room.ipADM == self.myIP and self.room.portADM == self.myPort)
-            if adm:  # Se este servidor for adm da sala
+            if not adm:
+                self.connection.sendall(f'O adm da sala se encontra no IP {self.room.ipADM} e porta {self.room.portADM}\n'.encode())
+            elif self.senderNick in self.room.members:
+                self.connection.sendall('Já existe alguém com o seu nick nesta sala\n'.encode())
+            elif (self.senderIP, self.senderNick) in self.room.ban:
+                self.connection.sendall('Este nick está banido da sala\n'.encode())
+            else:
                 print(f'O usuário {self.senderNick} com ip {self.senderIP} está pedindo para entrar na sala'
                 '\nDeseja aceitar a requisição? ')
                 self.myClient.reqEntry = True  # Como o peer servidor está rodando o chat no momento, esta conexão vai requerir a entrada
@@ -77,11 +97,11 @@ class Connection(threading.Thread):  # Esta thread representa uma conexão do se
                                             + lenRoomMembers + roomMembers + lenIps + ipMembers + lenBan + banMembers).encode())
                     time.sleep(0.05)
                     senderPort = int(splitMessage(senderPort)[0])
+                    print(f'O usuário {self.senderNick} se encontra no IP {self.senderIP} e porta {senderPort}')
                     self.myClient.updateRoom('add', self.senderNick, self.senderIP, senderPort)
                     self.room.queueADM.append(self.senderNick)
                     self.room.ips[(self.senderIP, senderPort)] = self.senderNick
                     self.room.members[self.senderNick] = (self.senderIP, senderPort)
-
                 else:
                     print(f'Você recusou a entrada do usuário {self.senderNick} de ip {self.senderIP}')
                     print('Deseja bani-lo?')
@@ -98,8 +118,6 @@ class Connection(threading.Thread):  # Esta thread representa uma conexão do se
                     else:
                         print(f'Você não baniu o usuário de nick {self.senderNick} e ip {self.senderIP}')
                         self.connection.sendall('Recusada, o ADM nao permitiu a sua entrada\n'.encode())
-            else:
-                self.connection.sendall('Sala não encontrada'.encode())
         elif data[0] == 'text':  # Se for um 'text', basta printar na tela
             print(f'{self.senderNick}: ' + str(data[1]))
         elif data[0] == 'update':  # Se for um update, recebe os dados e atualiza o seu objeto room
@@ -178,7 +196,7 @@ class Server(threading.Thread):
                                                   self.lock, dataReceived)
                     threadConnection.start()
                 else:
-                    connection.sendall('Você está banido desta sala!!\n'.encode())
+                    connection.sendall('Este nick está banido da sala\n'.encode())
         socket_.shutdown(SHUT_RDWR)
         socket_.close()
 
